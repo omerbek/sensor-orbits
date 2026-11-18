@@ -6,6 +6,15 @@ const mint = '#9ef4dc';
 const amber = '#ffcb7d';
 const ink = '#152129';
 const duration = 8;
+const controls = [...document.querySelectorAll('#settings input')];
+const settings = Object.fromEntries(controls.map(input => [
+  input.id, input.type === 'number' ? Number(input.value) : input.value
+]));
+controls.forEach(input => input.addEventListener('input', () => {
+  if (input.type === 'number' && (input.value === '' || !input.validity.valid)) return;
+  settings[input.id] = input.type === 'number' ? input.valueAsNumber : input.value;
+  draw();
+}));
 
 function rect(x, y, w, h, color) {
   ctx.fillStyle = color;
@@ -32,10 +41,10 @@ const smooth = value => clamp(value) ** 2 * (3 - 2 * clamp(value));
 const range = length => Array.from({length}, (_, index) => index);
 
 function render(t) {
-  line(range(81).map(i => [360 + 221 * Math.cos(i * Math.PI / 40), 202 + 110 * Math.sin(i * Math.PI / 40)]), '#40535a');
-  range(3).forEach(i => {
-    const a = 2 * Math.PI * smooth((t - .55 * i) / 6);
-    dot(360 + 221 * Math.cos(a), 202 + 110 * Math.sin(a), 10 + i * 3, i === 1 ? amber : mint);
+  line(range(81).map(i => [360 + settings.radius * Math.cos(i * Math.PI / 40), 202 + 110 * Math.sin(i * Math.PI / 40)]), '#40535a');
+  range(settings.count).forEach(i => {
+    const a = 2 * Math.PI * smooth((t - settings.lag * i) / 6);
+    dot(360 + settings.radius * Math.cos(a), 202 + 110 * Math.sin(a), 9 + i, i === 1 ? amber : mint);
   });
 }
 
@@ -77,6 +86,13 @@ play.addEventListener('click', () => {
 seek.addEventListener('input', () => {
   position = Number(seek.value);
   draw();
+});
+
+document.querySelector('#save').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'sensor-orbits.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 });
 
 draw();
